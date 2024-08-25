@@ -46,25 +46,29 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
   VideoViewingRecord? _videoViewingRecord;
 
   // Create a [Player] to control playback.
-  late final _player = Player(configuration: const PlayerConfiguration(pitch: true));
+  late final _player = Player(
+      configuration: const PlayerConfiguration(pitch: false, libass: true));
 
   // Create a [VideoController] to handle video output from [Player].
-  late final _controller = VideoController(_player, configuration: const VideoControllerConfiguration());
+  late final _controller = VideoController(_player,
+      configuration: const VideoControllerConfiguration());
 
   @override
   void initState() {
     super.initState();
     // 视频旋转角度监听
-    _player.stream.videoParams.listen((event) {
+    /*_player.stream.videoParams.listen((event) {
       if (event.rotate != null) {
         if (event.rotate == 0) {
           SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.top]);
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+              overlays: [SystemUiOverlay.top]);
         } else {
-          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+          SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+              overlays: []);
         }
       }
-    });
+    });*/
     // 当前播放进度监听
     _player.stream.position.listen((event) {
       // 如果视频长度未获取到那么不处理
@@ -81,6 +85,9 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
         LogUtil.e("_currentPos: $_currentPos");
         _saveViewingRecord(currentPos, _duration);
       }
+    });
+    _player.stream.track.listen((event) async {
+      LogUtil.e("object tracks);");
     });
     // 视频长度监听
     _player.stream.duration.listen((event) {
@@ -108,7 +115,8 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
       var url = await FileUtils.makeFileLink(element.remotePath, element.sign);
       if (url != null) {
         if (element.provider == "BaiduNetdisk") {
-          playList.add(Media(url, httpHeaders: {HttpHeaders.userAgentHeader: "pan.baidu.com"}));
+          playList.add(Media(url,
+              httpHeaders: {HttpHeaders.userAgentHeader: "pan.baidu.com"}));
         } else {
           playList.add(Media(url));
         }
@@ -116,6 +124,7 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
     });
     // 播放
     final playable = Playlist(playList, index: _index);
+    // _player.setSubtitleTrack(SubtitleTrack.auto());
     await _player.open(playable);
   }
 
@@ -131,10 +140,12 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
         verticalGestureSensitivity: 200,
         horizontalGestureSensitivity: 1000,
         controlsHoverDuration: const Duration(seconds: 5),
-        bottomButtonBarMargin: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 16),
+        bottomButtonBarMargin:
+            const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 16),
         seekBarMargin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
         seekBarContainerHeight: 50,
-        topButtonBarMargin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        topButtonBarMargin:
+            EdgeInsets.only(top: MediaQuery.of(context).padding.top),
         topButtonBar: [
           MaterialCustomButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -142,18 +153,24 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
             iconColor: Colors.white,
             onPressed: () => Get.back(),
           ),
-          Obx(() {
-            return SizedBox(
-              width: MediaQuery.of(context).size.width - 80,
-              child: Text(
-                _videoTitle.value,
-                style: Theme.of(context).textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            );
-          })
+          Expanded(
+            child: Obx(() {
+              return Padding(
+                padding: const EdgeInsets.only(right: 18.0),
+                child: Text(
+                  _videoTitle.value,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }),
+          )
         ],
+        shiftSubtitlesOnControlsVisibilityChange: true,
       ),
       fullscreen: MaterialVideoControlsThemeData(
         seekGesture: true,
@@ -164,10 +181,12 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
         verticalGestureSensitivity: 200,
         horizontalGestureSensitivity: 1000,
         controlsHoverDuration: const Duration(seconds: 5),
-        bottomButtonBarMargin: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8),
+        bottomButtonBarMargin:
+            const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 8),
         seekBarMargin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
         seekBarContainerHeight: 50,
-        topButtonBarMargin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+        topButtonBarMargin:
+            EdgeInsets.only(top: MediaQuery.of(context).padding.top),
         topButtonBar: [
           /*MaterialCustomButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -180,18 +199,24 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
             iconSize: IconTheme.of(context).size ?? 14,
             iconColor: Colors.white,
           ),
-          Obx(() {
-            return SizedBox(
-              width: MediaQuery.of(context).size.width - 100,
-              child: Text(
-                _videoTitle.value,
-                style: Theme.of(context).textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            );
-          })
+          Expanded(
+            child: Obx(() {
+              return Padding(
+                padding: const EdgeInsets.only(right: 18.0),
+                child: Text(
+                  _videoTitle.value,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }),
+          ),
         ],
+        shiftSubtitlesOnControlsVisibilityChange: true,
       ),
       child: PopScope(
         canPop: !isFullscreen(context),
@@ -203,7 +228,7 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
         child: Scaffold(
           body: Video(
             controller: _controller,
-            controls: CupertinoVideoControls,
+            // controls: CupertinoVideoControls,
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
           ),
@@ -231,9 +256,11 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
   @transaction
   Future<void> _fileViewingRecord(VideoItem file) async {
     var user = _userController.user.value;
-    AlistDatabaseController databaseController = Get.find<AlistDatabaseController>();
+    AlistDatabaseController databaseController =
+        Get.find<AlistDatabaseController>();
     var recordData = databaseController.fileViewingRecordDao;
-    await recordData.deleteByPath(user.serverUrl, user.username, file.remotePath);
+    await recordData.deleteByPath(
+        user.serverUrl, user.username, file.remotePath);
     await recordData.insertRecord(FileViewingRecord(
       serverUrl: user.serverUrl,
       userId: user.username,
@@ -253,7 +280,8 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
   Future<void> _findAndCacheViewingRecord(VideoItem file) async {
     final userId = _userController.user().username;
     final baseUrl = _userController.user().baseUrl;
-    var record = await _database.videoViewingRecordDao.findRecordByPath(baseUrl, userId, file.remotePath);
+    var record = await _database.videoViewingRecordDao
+        .findRecordByPath(baseUrl, userId, file.remotePath);
     if (record != null) {
       Log.d("findAndCacheViewingRecord");
       _videoViewingRecord = record;
@@ -270,7 +298,8 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
     final userId = _userController.user().username;
     final baseUrl = _userController.user().baseUrl;
     final path = _videos[_index].remotePath;
-    var record = await _database.videoViewingRecordDao.findRecordByPath(baseUrl, userId, path);
+    var record = await _database.videoViewingRecordDao
+        .findRecordByPath(baseUrl, userId, path);
     if (record != null) {
       Log.d("delete record ${record.id}");
       await _database.videoViewingRecordDao.deleteRecord(record);
@@ -294,7 +323,9 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
           path: path,
           videoCurrentPosition: currentPos,
           videoDuration: duration);
-      _database.videoViewingRecordDao.insertRecord(videoViewingRecord).then((id) {
+      _database.videoViewingRecordDao
+          .insertRecord(videoViewingRecord)
+          .then((id) {
         Log.d("insert record id=$id");
         _videoViewingRecord = VideoViewingRecord(
           id: id,
