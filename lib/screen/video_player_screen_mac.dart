@@ -45,17 +45,21 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
   final _videoTitle = "".obs;
   VideoViewingRecord? _videoViewingRecord;
 
-  // Create a [Player] to control playback.
-  late final _player = Player(
-      configuration: const PlayerConfiguration(pitch: false, libass: true));
-
-  // Create a [VideoController] to handle video output from [Player].
-  late final _controller = VideoController(_player,
-      configuration: const VideoControllerConfiguration());
+  late final _player = Player();
+  late final _controller = VideoController(_player);
 
   @override
   void initState() {
     super.initState();
+    // 初始视频状态化监听
+    _initListener();
+
+    // 开始播放
+    _startPlay();
+  }
+
+  // 初始视频状态化监听
+  void _initListener() {
     // 视频旋转角度监听
     /*_player.stream.videoParams.listen((event) {
       if (event.rotate != null) {
@@ -101,8 +105,6 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
       _fileViewingRecord(_videos[_index]);
       _findAndCacheViewingRecord(_videos[_index]);
     });
-
-    _startPlay();
   }
 
   void _startPlay() async {
@@ -130,7 +132,98 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
 
   @override
   Widget build(BuildContext context) {
+    // 移动端播放器配置
+    if (Platform.isAndroid || Platform.isIOS) {
+      return _buildMobilePlayer(context);
+    }
+    // 桌面端播放器配置
+    return _buildComputerPlayer(context);
+  }
+
+  /// 桌面端播放器配置
+  Widget _buildComputerPlayer(BuildContext context) {
+    return MaterialDesktopVideoControlsTheme(
+      key: const ObjectKey("mac"),
+      normal: MaterialDesktopVideoControlsThemeData(
+        visibleOnMount: true,
+        controlsHoverDuration: const Duration(seconds: 5),
+        topButtonBar: [
+          MaterialCustomButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            iconSize: IconTheme.of(context).size ?? 14,
+            iconColor: Colors.white,
+            onPressed: () => Get.back(),
+          ),
+          Expanded(
+            child: Obx(() {
+              return Padding(
+                padding: const EdgeInsets.only(right: 18.0),
+                child: Text(
+                  _videoTitle.value,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }),
+          )
+        ],
+      ),
+      fullscreen: MaterialDesktopVideoControlsThemeData(
+        visibleOnMount: true,
+        controlsHoverDuration: const Duration(seconds: 5),
+        topButtonBar: [
+          MaterialFullscreenButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            iconSize: IconTheme.of(context).size ?? 14,
+            iconColor: Colors.white,
+          ),
+          Expanded(
+            child: Obx(() {
+              return Padding(
+                padding: const EdgeInsets.only(right: 18.0),
+                child: Text(
+                  _videoTitle.value,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(color: Colors.white),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+      child: PopScope(
+        canPop: !isFullscreen(context),
+        onPopInvoked: (didPop) {
+          if (isFullscreen(context)) {
+            exitFullscreen(context);
+          }
+        },
+        child: Scaffold(
+          body: Video(
+            key: const ObjectKey("video"),
+            controller: _controller,
+            // controls: CupertinoVideoControls,
+            controls: MaterialDesktopVideoControls,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 移动端播放器
+  Widget _buildMobilePlayer(BuildContext context) {
     return MaterialVideoControlsTheme(
+      key: const ObjectKey("mobile"),
       normal: MaterialVideoControlsThemeData(
         seekGesture: true,
         volumeGesture: true,
@@ -188,12 +281,6 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
         topButtonBarMargin:
             EdgeInsets.only(top: MediaQuery.of(context).padding.top),
         topButtonBar: [
-          /*MaterialCustomButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            iconSize: IconTheme.of(context).size ?? 14,
-            iconColor: Colors.white,
-            onPressed: () => Get.back(),
-          ),*/
           MaterialFullscreenButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
             iconSize: IconTheme.of(context).size ?? 14,
@@ -228,7 +315,7 @@ class _VideoPlayerScreenMacState extends State<VideoPlayerScreenMac> {
         child: Scaffold(
           body: Video(
             controller: _controller,
-            // controls: CupertinoVideoControls,
+            controls: MaterialVideoControls,
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
           ),
