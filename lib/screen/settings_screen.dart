@@ -126,7 +126,7 @@ class _SettingsContainerState extends State<_SettingsContainer>
             break;
         }
       },
-      horizontalTitleGap: 2,
+      horizontalTitleGap: 16,
       tileColor: Theme.of(context).colorScheme.background.withAlpha(125),
       minVerticalPadding: 15,
       leading: Image.asset(settingsMenu.icon),
