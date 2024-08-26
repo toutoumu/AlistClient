@@ -38,7 +38,7 @@ class GalleryScreen extends StatelessWidget {
       files: files,
       index: initializedIndex,
     ));
-    Widget widget = Stack(
+    /*Widget widget = Stack(
       children: [
         _buildImageViewPager(controller),
         Positioned(
@@ -48,6 +48,13 @@ class GalleryScreen extends StatelessWidget {
           child: _buildAppBar(controller),
         )
       ],
+    );*/
+
+    Widget widget = Scaffold(
+      appBar: _buildAppBar(controller),
+      body: _buildImageViewPager(controller),
+      extendBody: true,
+      extendBodyBehindAppBar: true,
     );
 
     return GalleryMenuAnchor(

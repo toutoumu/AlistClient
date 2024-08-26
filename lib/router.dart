@@ -16,6 +16,7 @@ import 'package:alist/screen/settings_screen.dart';
 import 'package:alist/screen/splash_screen.dart';
 import 'package:alist/screen/uploading_files_screen.dart';
 import 'package:alist/screen/video_player_screen.dart';
+import 'package:alist/screen/video_player_screen_mac.dart';
 import 'package:alist/screen/web_screen.dart';
 import 'package:alist/util/named_router.dart';
 import 'package:get/get_navigation/src/routes/get_route.dart';
@@ -32,6 +33,8 @@ class AlistRouter {
     GetPage(name: NamedRouter.settings, page: () => const SettingsScreen()),
     GetPage(
         name: NamedRouter.videoPlayer, page: () => const VideoPlayerScreen()),
+    GetPage(
+        name: NamedRouter.videoPlayerMac, page: () => const VideoPlayerScreenMac()),
     GetPage(
         name: NamedRouter.audioPlayer, page: () => AudioPlayerScreen()),
     GetPage(name: NamedRouter.donate, page: () => const DonateScreen()),
