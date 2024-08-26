@@ -5,6 +5,7 @@ import 'package:alist/database/alist_database_controller.dart';
 import 'package:alist/util/download/download_manager.dart';
 import 'package:alist/util/download/download_task.dart';
 import 'package:alist/util/download/download_task_status.dart';
+import 'package:alist/util/file_utils.dart';
 import 'package:alist/util/named_router.dart';
 import 'package:alist/util/user_controller.dart';
 import 'package:alist/widget/alist_scaffold.dart';
@@ -14,6 +15,7 @@ import 'package:flustars/flustars.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:get/get.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfReaderScreen extends StatelessWidget {
   final PdfReaderScreenController _controller =
@@ -21,23 +23,26 @@ class PdfReaderScreen extends StatelessWidget {
 
   PdfReaderScreen({Key? key}) : super(key: key);
 
+  final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return AlistScaffold(
       appbarTitle: OverflowText(text: _controller.pdfItem.name),
-      body: Obx(
+      /*body: Obx(
         () => LoadingStatusWidget(
           loading: _controller.loading.value,
           retryCallback: () => _controller.retry(),
           errorMsg: _controller.errMsg.value,
           child: _buildPDFView(),
         ),
-      ),
+      ),*/
+      body: _buildPDFView(),
     );
   }
 
   Widget _buildPDFView() {
-    return Obx(
+    /*return Obx(
       () => _controller.localPath.value.isNotEmpty
           ? PDFView(
               filePath: _controller.localPath.value,
@@ -57,7 +62,20 @@ class PdfReaderScreen extends StatelessWidget {
               },
             )
           : const SizedBox(),
-    );
+    );*/
+    return Obx(() {
+      if (_controller.netUrl.isNotEmpty) {
+        return SfPdfViewer.network(
+          _controller.netUrl.value,
+          headers: _controller.requestHeaders,
+          key: _pdfViewerKey,
+        );
+      } else if (_controller.localPath.value.isNotEmpty) {
+        return SfPdfViewer.file(File(_controller.localPath.value),
+            key: _pdfViewerKey);
+      }
+      return const SizedBox();
+    });
   }
 }
 
@@ -69,10 +87,44 @@ class PdfReaderScreenController extends GetxController {
   var localPath = "".obs;
   var errMsg = "".obs;
 
+  // 网络连接
+  var netUrl = "".obs;
+
+  // 请求头
+  final requestHeaders = <String, String>{};
+
   @override
   void onInit() {
     super.onInit();
-    if (pdfItem.localPath == null || pdfItem.localPath!.isEmpty) {
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (pdfItem.localPath == null || pdfItem.localPath!.isEmpty) {
+        AlistDatabaseController databaseController = Get.find();
+        UserController userController = Get.find();
+        final user = userController.user.value;
+        databaseController.downloadRecordRecordDao
+            .findRecordByRemotePath(
+                user.serverUrl, user.username, pdfItem.remotePath)
+            .then((value) {
+          if (value != null && File(value.localPath).existsSync()) {
+            localPath.value = "file://${value.localPath}";
+          } else {
+            if (pdfItem.provider == "BaiduNetdisk") {
+              requestHeaders["User-Agent"] = "pan.baidu.com";
+            }
+            // 如果不是本地文件,那么先获取下载链接
+            FileUtils.makeFileLink(pdfItem.remotePath, pdfItem.sign)
+                .then((value) {
+              if (value != null) {
+                netUrl.value = value;
+              }
+            });
+          }
+        });
+      } else if (pdfItem.localPath?.isNotEmpty == true) {
+        localPath.value = "${pdfItem.localPath}";
+      }
+    });
+    /*if (pdfItem.localPath == null || pdfItem.localPath!.isEmpty) {
       AlistDatabaseController databaseController = Get.find();
       UserController userController = Get.find();
       final user = userController.user.value;
@@ -89,7 +141,7 @@ class PdfReaderScreenController extends GetxController {
       });
     } else if (pdfItem.localPath?.isNotEmpty == true) {
       localPath.value = "file://${pdfItem.localPath}";
-    }
+    }*/
   }
 
   @override

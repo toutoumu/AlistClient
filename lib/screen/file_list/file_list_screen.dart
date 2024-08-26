@@ -45,6 +45,7 @@ import 'package:alist/widget/file_details_dialog.dart';
 import 'package:alist/widget/file_list_item_view.dart';
 import 'package:alist/widget/overflow_text.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:file_picker/file_picker.dart' as Picker;
 import 'package:floor/floor.dart';
 import 'package:flustars/flustars.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +57,6 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 typedef FileItemClickCallback = Function(BuildContext context, int index);
 
@@ -303,13 +303,28 @@ class _FileListScreenState extends State<FileListScreen>
   }
 
   Future<void> _uploadFiles() async {
-    SmartDialog.showLoading(msg: Intl.fileList_tip_processing.tr);
-    List<String?>? paths = await FlutterDocumentPicker.openDocuments();
-    SmartDialog.dismiss();
-    if (paths == null || paths.isEmpty) {
-      return;
+    List<String> filePaths;
+
+    // macos,web,windows 用这个
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      SmartDialog.showLoading(msg: Intl.fileList_tip_processing.tr);
+      Picker.FilePickerResult? result =
+          await Picker.FilePicker.platform.pickFiles(allowMultiple: true);
+      SmartDialog.dismiss();
+      if (result == null || result.paths.isEmpty) {
+        return;
+      }
+      filePaths = result.paths.map((e) => e!).toList();
+    } else {
+      SmartDialog.showLoading(msg: Intl.fileList_tip_processing.tr);
+      List<String?>? paths = await FlutterDocumentPicker.openDocuments();
+      SmartDialog.dismiss();
+      if (paths == null || paths.isEmpty) {
+        return;
+      }
+      filePaths = paths.map((e) => e!).toList();
     }
-    List<String> filePaths = paths.map((e) => e!).toList();
+
     var originalFileNames = _files.map((e) => e.name).toSet();
     await Get.toNamed(
       NamedRouter.uploadingFiles,
@@ -452,7 +467,8 @@ class _FileListScreenState extends State<FileListScreen>
     );
   }
 
-  void _onFileTap(BuildContext context, int index, bool fromDialog) {
+  Future<void> _onFileTap(
+      BuildContext context, int index, bool fromDialog) async {
     var file = _files[index];
     var files = _files;
     FileType fileType = file.type;
@@ -507,20 +523,50 @@ class _FileListScreenState extends State<FileListScreen>
       case FileType.apk:
       case FileType.compress:
       default:
-        var fileReaderItem = FileReaderItem(
-          name: file.name,
-          remotePath: file.path,
-          sign: file.sign,
-          provider: file.provider,
-          thumb: file.thumb,
-          fileType: file.type,
-        );
-        Get.toNamed(
-          NamedRouter.fileReader,
-          arguments: {"fileReaderItem": fileReaderItem},
-        );
+        if (await _showDownloadDialog(context)) {
+          var fileReaderItem = FileReaderItem(
+            name: file.name,
+            remotePath: file.path,
+            sign: file.sign,
+            provider: file.provider,
+            thumb: file.thumb,
+            fileType: file.type,
+          );
+          Get.toNamed(
+            NamedRouter.fileReader,
+            arguments: {"fileReaderItem": fileReaderItem},
+          );
+        }
         break;
     }
+  }
+
+  Future<bool> _showDownloadDialog(context) async {
+    return await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(Intl.fileList_menu_download.tr),
+            content: Text(Intl.fileList_menu_download.tr),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // SmartDialog.dismiss();
+                  Get.back(result: false);
+                },
+                child: Text(Intl.deleteAccountDialog_btn_cancel.tr),
+              ),
+              TextButton(
+                onPressed: () {
+                  // SmartDialog.dismiss();
+                  Get.back(result: true);
+                },
+                child: Text(Intl.deleteAccountDialog_btn_ok.tr),
+              ),
+            ],
+          );
+        });
   }
 
   void _goAudioPlayerScreen(FileItemVO file, List<FileItemVO> files) async {
@@ -1090,6 +1136,8 @@ class _FileListView extends StatelessWidget {
     return SmartRefresher(
       controller: refreshController,
       onRefresh: refreshCallback,
+      // 这个刷新的时候列表不会上下滚动
+      header: const MaterialClassicHeader(),
       child: ListView.separated(
         itemCount: itemCount,
         separatorBuilder: (context, index) => const Padding(

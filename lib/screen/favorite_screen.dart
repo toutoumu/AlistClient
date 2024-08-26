@@ -153,7 +153,8 @@ class _FavoriteScreenState extends State<FavoriteScreen>
     });
   }
 
-  void _onFileTap(BuildContext context, Favorite file, bool fromDialog) {
+  Future<void> _onFileTap(
+      BuildContext context, Favorite file, bool fromDialog) async {
     FileType fileType = FileUtils.getFileType(file.isDir, file.name);
     if (!file.isDir) {
       _fileViewingRecord(file);
@@ -201,20 +202,50 @@ class _FavoriteScreenState extends State<FavoriteScreen>
       case FileType.apk:
       case FileType.compress:
       default:
-        var fileReaderItem = FileReaderItem(
-          name: file.name,
-          remotePath: file.path,
-          sign: file.sign,
-          provider: file.provider,
-          thumb: file.thumb,
-          fileType: FileUtils.getFileType(false, file.name),
-        );
-        Get.toNamed(
-          NamedRouter.fileReader,
-          arguments: {"fileReaderItem": fileReaderItem},
-        );
+        if (await _showDownloadDialog(context)) {
+          var fileReaderItem = FileReaderItem(
+            name: file.name,
+            remotePath: file.path,
+            sign: file.sign,
+            provider: file.provider,
+            thumb: file.thumb,
+            fileType: FileUtils.getFileType(false, file.name),
+          );
+          Get.toNamed(
+            NamedRouter.fileReader,
+            arguments: {"fileReaderItem": fileReaderItem},
+          );
+        }
         break;
     }
+  }
+
+  Future<bool> _showDownloadDialog(context) async {
+    return await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(Intl.fileList_menu_download.tr),
+            content: Text(Intl.fileList_menu_download.tr),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // SmartDialog.dismiss();
+                  Get.back(result: false);
+                },
+                child: Text(Intl.deleteAccountDialog_btn_cancel.tr),
+              ),
+              TextButton(
+                onPressed: () {
+                  // SmartDialog.dismiss();
+                  Get.back(result: true);
+                },
+                child: Text(Intl.deleteAccountDialog_btn_ok.tr),
+              ),
+            ],
+          );
+        });
   }
 
   @transaction

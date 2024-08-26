@@ -43,7 +43,15 @@ class VideoPlayerUtil {
 
   static void _playUrlWithInternalPlayer(List<VideoItem> videos, int index,
       {String? playerType}) async {
-    if (Platform.isAndroid) {
+    // 内置播放器全部采用 mpv
+    Get.toNamed(
+      NamedRouter.videoPlayerMac,
+      arguments: {
+        "videos": videos,
+        "index": index,
+      },
+    );
+    /*if (Platform.isAndroid) {
       var videosParams = <Map<String, String?>>[];
       Map<String, String> headers = {};
 
@@ -56,10 +64,8 @@ class VideoPlayerUtil {
         videoParam["sign"] = element.sign;
         videoParam["provider"] = element.provider;
         videoParam["thumb"] = element.thumb;
-        videoParam["url"] =
-            await FileUtils.makeFileLink(element.remotePath, element.sign);
-        videoParam["modifiedMilliseconds"] =
-            element.modifiedMilliseconds?.toString();
+        videoParam["url"] = await FileUtils.makeFileLink(element.remotePath, element.sign);
+        videoParam["modifiedMilliseconds"] = element.modifiedMilliseconds?.toString();
         videoParam["size"] = element.size?.toString();
         if (videoParam["url"] == null || videoParam["url"] == "") {
           return;
@@ -80,7 +86,7 @@ class VideoPlayerUtil {
           "index": index,
         },
       );
-    }
+    }*/
   }
 
   static Future<bool> _playUrlWithExternalPlayer(
@@ -122,7 +128,7 @@ class VideoPlayerUtil {
       }
 
       var packageName = videoPlayerRouter.substringBeforeLast("/")!;
-      if (Platform.isIOS) {
+      if (!Platform.isAndroid) {
         if (packageName.startsWith("nplayer-")) {
           // nplayer 不支持302跳转播放
           var rawUrl = await requestRawUrl(remotePath, password);

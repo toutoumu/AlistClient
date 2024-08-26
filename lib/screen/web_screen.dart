@@ -40,7 +40,6 @@ class _WebScreenState extends State<WebScreen> {
         ));
   }
 
-
   @override
   Widget build(BuildContext context) {
     return AlistScaffold(
@@ -63,7 +62,8 @@ class _WebScreenState extends State<WebScreen> {
               return true;
             },
             child: InAppWebView(
-              initialUrlRequest: URLRequest(url: Uri.tryParse(firstPageUrl)),
+              // initialUrlRequest: URLRequest(url: Uri.tryParse(firstPageUrl)),
+              initialUrlRequest: URLRequest(url: WebUri(firstPageUrl)),
               onLoadStart: (controller, uri) {
                 debugPrint("onLoadStart");
                 setState(() {

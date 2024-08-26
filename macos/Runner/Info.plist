@@ -33,5 +33,9 @@
         <key>NSAllowsArbitraryLoads</key>
         <true/>
     </dict>
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
 </dict>
 </plist>

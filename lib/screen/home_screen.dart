@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 import 'favorite_screen.dart';
 
@@ -45,6 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return _buildResponsive();
+    // 原有代码
     return Scaffold(
       body: PageView(
         controller: _pageController,
@@ -90,6 +93,129 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
       ),
+    );
+  }
+
+  ResponsiveBuilder _buildResponsive() {
+    return ResponsiveBuilder(
+      builder: (BuildContext context, SizingInformation sizingInformation) {
+        return Scaffold(
+          body: Row(
+            children: [
+              if (!sizingInformation.isMobile)
+                NavigationRail(
+                  selectedIndex: _currentPage,
+                  // 设置选中项的索引
+                  onDestinationSelected: (int index) {
+                    setState(() {
+                      _currentPage = index; // 处理目标选中事件
+                    });
+                  },
+                  extended: sizingInformation.isDesktop,
+                  leading: sizingInformation.isDesktop
+                      ? const Text("AlistClient")
+                      : null,
+                  // 显示所有标签
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.folder_rounded),
+                      label: Text(Intl.screenName_home.tr),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.timelapse_rounded),
+                      label: Text(Intl.screenName_recents.tr),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.star_rounded),
+                      label: Text(Intl.screenName_favorite.tr),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.settings_rounded),
+                      label: Text(Intl.screenName_settings.tr),
+                    )
+                  ],
+                ),
+              // 页面内容组件
+              Expanded(
+                child: IndexedStack(
+                  index: _currentPage,
+                  children: <Widget>[
+                    Column(
+                      children: [
+                        /*SizedBox(
+                          height: customToolbarHeight,
+                          child: Row(
+                            children: [
+                              Obx(() {
+                                return FxBreadCrumbNavigator.simple(
+                                  key: GlobalKey(),
+                                  firstRoute: "/",
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .secondaryContainer,
+                                  breadButtonType: BreadButtonType.shaped,
+                                );
+                              }),
+                            ],
+                          ),
+                        ),*/
+                        Expanded(
+                          child: FileListNavigator(
+                            isInFileListStack: _currentPage == 0,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const RecentsScreen(),
+                    const FavoriteScreen(),
+                    const SettingsScreen(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: sizingInformation.isMobile
+              ? AlistBottomNavigationBar(
+                  items: <BottomNavigationBarItem>[
+                    BottomNavigationBarItem(
+                      icon: const Icon(Icons.folder_rounded),
+                      label: Intl.screenName_home.tr,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Icon(Icons.timelapse_rounded),
+                      label: Intl.screenName_recents.tr,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Icon(Icons.star_rounded),
+                      label: Intl.screenName_favorite.tr,
+                    ),
+                    BottomNavigationBarItem(
+                      icon: const Icon(Icons.settings_rounded),
+                      label: Intl.screenName_settings.tr,
+                    )
+                  ],
+                  currentIndex: _currentPage,
+                  type: BottomNavigationBarType.fixed,
+                  onTap: (int idx) {
+                    setState(() {
+                      _currentPage = idx; // 处理目标选中事件
+                    });
+                  },
+                  onLongPress: (int idx) {
+                    LogUtil.d("onDoubleTap: $idx");
+                    if (idx == 0 && _currentPage == 0) {
+                      Get.until((route) => route.isFirst,
+                          id: AlistRouter.fileListRouterStackId);
+                    } else {
+                      setState(() {
+                        _currentPage = idx; // 处理目标选中事件
+                      });
+                    }
+                  },
+                )
+              : null,
+        );
+      },
     );
   }
 

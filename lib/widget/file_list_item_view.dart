@@ -39,7 +39,7 @@ class FileListItemView extends StatelessWidget {
     }
 
     return ListTile(
-      horizontalTitleGap: 6,
+      horizontalTitleGap: 16,
       minVerticalPadding: 12,
       leading: Column(
         mainAxisAlignment: MainAxisAlignment.center,
