@@ -17,7 +17,7 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<key>NSCameraUsageDescription&gt;</key>
+	<key>NSCameraUsageDescription</key>
 	<string>Photo/video upload function requires you to grant camera access</string>
 	<key>UIBackgroundModes</key>
 	<array>
